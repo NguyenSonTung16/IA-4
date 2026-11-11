@@ -1,0 +1,19 @@
+{
+  "name": "awad-release-rollback-starter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "IA#4 starter: a small short-link service to package, release under load and roll back",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node src/migrate.js up && node src/server.js",
+    "test": "node --test --test-reporter=spec \"test/**/*.test.js\"",
+    "load": "node tools/load.js",
+    "check": "node tools/check.js",
+    "mark": "node tools/mark.js",
+    "drill:build": "node tools/drills/build.js",
+    "migrate:image": "node deploy/migrate.js",
+    "release": "node deploy/release.js",
+    "rollback": "node deploy/rollback.js"
+  }
+}

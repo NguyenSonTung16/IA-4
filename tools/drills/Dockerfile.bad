@@ -1,0 +1,7 @@
+# The bad release of the rollback drill: your image, plus a fault. Build it with
+#   npm run drill:build -- v2
+ARG BASE=linkbox:v2
+FROM ${BASE}
+ENV APP_VERSION=2.0.1-bad
+COPY fault.mjs /opt/drill/fault.mjs
+ENV NODE_OPTIONS=--import=/opt/drill/fault.mjs

@@ -1,0 +1,29 @@
+# One router, two slots, one database volume.
+#
+#   docker compose up -d --build router blue     start the router and the blue slot
+#   GREEN_TAG=v2 docker compose up -d --no-deps green    put image linkbox:v2 in the green slot
+#
+# Which slot gets traffic is decided by the router, not by this file. See README.md.
+name: linkbox
+
+services:
+  router:
+    build: ./tools/router
+    ports:
+      - "127.0.0.1:8080:8080"   # traffic
+      - "127.0.0.1:8081:8081"   # the router's control port, see README.md
+
+  blue:
+    image: linkbox:${BLUE_TAG:-v1}
+    env_file: env/${APP_ENV:-staging}.env
+    volumes:
+      - data:/data
+
+  green:
+    image: linkbox:${GREEN_TAG:-v1}
+    env_file: env/${APP_ENV:-staging}.env
+    volumes:
+      - data:/data
+
+volumes:
+  data:
