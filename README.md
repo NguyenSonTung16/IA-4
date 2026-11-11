@@ -64,11 +64,10 @@ What the load script counts as failed:
 
 ## The steps
 
-### 1. Predict
+### 1. Look at what you were given
 
-Read `Dockerfile`, `src/config.js`, `src/server.js` and `compose.yaml`. Write down, in
-`NOTES.md`, what you expect to go wrong when this service is replaced under traffic. Then see
-for yourself:
+Read `Dockerfile`, `src/config.js`, `src/server.js` and `compose.yaml`, then see for yourself
+what the checks say about the image:
 
 ```bash
 git init            # if you did not clone it
