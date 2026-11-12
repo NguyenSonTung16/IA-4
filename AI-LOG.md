@@ -22,3 +22,21 @@ Assistant: Claude (Sonnet 5.5), used through the Claude desktop app. Entries are
     collected; only the image's Node 22.13.1 showed it. Reproduced afterwards with Node 22.13.1 and a forced GC:
     `/health` 500 before, 200 after.
   - Fix: `b8340ef` keeps `db` in a variable and closes it on shutdown (brief 1b in `BRIEF.md`).
+
+## Brief 2 — the change: links can expire (commit "change: links can expire…")
+
+**Changed** (what I kept from the assistant)
+- `migrations/002_expiry.up.sql` / `.down.sql`: nullable `links.expires_at`, a `flags` table with `expiry` = 0.
+  Additive, so v1 keeps running on it; the down file drops both again.
+- `src/app.js`: `PUT /admin/flags/expiry`, `flags` in `GET /version`, the flag read from the database at
+  every request (no cache, so a flip reaches every instance at once), 400 / 410 behaviour from `docs/CHANGE.md`.
+- `test/expiry.test.js`: new tests for the flag, the 400 and 410 cases, the old rows, two instances on one
+  database, and the migration up, down, up. `test/app.test.js` is untouched.
+
+**Rejected** (what the assistant got wrong, and what caught it)
+- The first `src/app.js` relied on the `server.js` fix alone to keep the database alive. Running the tests on
+  Node 22.13.1 (the image's version) showed the starter's own `test/app.test.js` failing 2 of 6 with
+  `statement has been finalized`, and my new tests failing the same way: the same garbage-collection problem,
+  in any caller that does not hold the database. It only appeared on 22.13.1, not on the Node 22.23 used first.
+  - Caught by: running `node --test` on both Node versions, not by a check.
+  - Fix: `createApp` keeps `server.db = db`, so the app holds the database for as long as it lives, whoever calls it.
