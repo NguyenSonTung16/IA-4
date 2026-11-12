@@ -1,0 +1,86 @@
+
+> awad-release-rollback-starter@1.0.0 migrate:image
+> node deploy/migrate.js v1
+
+ Volume linkbox_data Creating 
+ Volume linkbox_data Creating 
+ Volume linkbox_data Created 
+ Volume linkbox_data Created 
+ Container linkbox-blue-run-3b6f219a8ddd Creating 
+ Container linkbox-blue-run-3b6f219a8ddd Created 
+applied  001_init
+(node:1) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+> awad-release-rollback-starter@1.0.0 migrate:image
+> node deploy/migrate.js v2
+
+ Container linkbox-blue-run-89d73662991b Creating 
+ Container linkbox-blue-run-89d73662991b Created 
+applied  002_expiry
+(node:1) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+> awad-release-rollback-starter@1.0.0 release
+> node deploy/release.js v2
+
+[05:34:33] release v2: blue serves all traffic, the new image goes to green
+ Container linkbox-green-1 Creating 
+ Container linkbox-green-1 Created 
+ Container linkbox-green-1 Starting 
+ Container linkbox-green-1 Started 
+[05:34:34] green runs linkbox:v2; waiting for Docker to report it healthy
+[05:34:37] green is healthy after 3.4 s
+[05:34:37] green takes 10% for 15 s
+[05:34:52] green at 10%: 56 requests, 0 errors since the release began
+[05:34:52] green takes 50% for 15 s
+[05:35:08] green at 50%: 346 requests, 0 errors since the release began
+[05:35:08] green takes 100% for 10 s
+[05:35:18] green at 100%: 751 requests, 0 errors since the release began
+[05:35:18] release v2 done: green serves 100%, blue is still running (npm run rollback goes back)
+
+> awad-release-rollback-starter@1.0.0 mark
+> node tools/mark.js flag expiry on
+
+{"flag":"expiry","enabled":true}
+
+> awad-release-rollback-starter@1.0.0 rollback
+> node deploy/rollback.js
+
+[05:35:32] rollback: traffic goes from green to blue
+[05:35:32] confirmed by GET :8081/state: blue 100%, green 0%
+[05:35:32] so far: blue 2722 requests, 0 errors; green 1304 requests, 0 errors
+
+> awad-release-rollback-starter@1.0.0 release
+> node deploy/release.js v2
+
+[05:35:45] release v2: blue serves all traffic, the new image goes to green
+ Container linkbox-green-1 Running 
+[05:35:45] green runs linkbox:v2; waiting for Docker to report it healthy
+[05:35:45] green is healthy after 0.1 s
+[05:35:45] green takes 10% for 15 s
+[05:36:01] green at 10%: 57 requests, 0 errors since the release began
+[05:36:01] green takes 50% for 15 s
+[05:36:16] green at 50%: 352 requests, 0 errors since the release began
+[05:36:16] green takes 100% for 10 s
+[05:36:26] green at 100%: 755 requests, 0 errors since the release began
+[05:36:26] release v2 done: green serves 100%, blue is still running (npm run rollback goes back)
+
+> awad-release-rollback-starter@1.0.0 drill:build
+> node tools/drills/build.js v2
+
+sha256:ce3c008ad57c45ccd053780eb88a6adad26c9a05326335af8aec3cafefcc7b57
+
+> awad-release-rollback-starter@1.0.0 release
+> node deploy/release.js v3-bad
+
+[05:36:30] release v3-bad: green serves all traffic, the new image goes to blue
+ Container linkbox-blue-1 Recreate 
+ Container linkbox-blue-1 Recreated 
+ Container linkbox-blue-1 Starting 
+ Container linkbox-blue-1 Started 
+[05:36:32] blue runs linkbox:v3-bad; waiting for Docker to report it healthy
+[05:36:35] blue is healthy after 3.4 s
+[05:36:35] blue takes 10% for 15 s
+[05:36:39] GATE: blue is failing: 3 errors in 14 requests at 10% (limit 3, or 2% of at least 50)
+[05:36:39] ROLLED BACK by the gate: green has 100% again; blue is left running for inspection

@@ -1,0 +1,56 @@
+
+> awad-release-rollback-starter@1.0.0 check
+> node tools/check.js
+
+tools fingerprint: 4b56096c90ea819d
+
+== tools
+PASS  T1  tools fingerprint 4b56096c90ea819d: compare it with the value in the rubric (tools/FINGERPRINT says 4b56096c90ea819d)
+PASS  T2  tools/ and test/app.test.js are as the starter had them
+PASS  T3  old-client tests: 6 pass, 0 fail
+
+== image linkbox:v2
+PASS  I1  base image pinned to a version: node:22.13.1-alpine
+PASS  I2  image size 224 MB (limit 300)
+PASS  I3  runs as a non-root user: USER is node
+PASS  I4  no secret in the image config or its history
+PASS  I5  only what the service needs in /app: migrations, package.json, src
+PASS  I6  migrations run from inside the image, on a fresh volume at /data
+PASS  I7  version comes from the image: /version says 2.0.0, APP_VERSION says 2.0.0
+PASS  I8  staging config applied: env=staging, shortUrl=https://staging.check.test/r/iq9e9ipk
+PASS  I9  HEALTHCHECK reports healthy: healthy
+PASS  I10 docker stop with a request in flight: request got 200, stop took 1.7 s (limit 8 s)
+PASS  I11 same image, production config: env=production, shortUrl=https://links.check.test/r/iq9e9ipk
+PASS  I12 data outlives the container: link created before the replacement answers 200
+PASS  I13 production with no ADMIN_TOKEN: exits with code 1, names the variable
+PASS  I14 production with ADMIN_TOKEN=dev-secret: exits with code 1, names the variable
+PASS  I15 starting the container does not run migrations
+
+== change in docs/CHANGE.md, on linkbox:v2
+PASS  F1  flag off by default: /version flags.expiry=false, POST with expiresInSeconds gives expiresAt=null
+PASS  F2  PUT /admin/flags/expiry with a wrong token answers 401
+PASS  F3  PUT /admin/flags/expiry with the token from ADMIN_TOKEN answers 200
+PASS  F4  flag reaches a second instance on the same database in 5 ms
+PASS  F5  flag on, expiresInSeconds=-1 answers 400
+PASS  F6  flag on, link with 2 s to live: expiresAt=2026-11-12T05:37:25.575Z, 302 before it expires, 410 expired after
+PASS  F7  flag off again, no restart: the expired link answers 302, the container was not restarted
+
+== compat: linkbox:v1 and linkbox:v2 on one database
+PASS  C1  linkbox:v1 on the migrated schema: POST answers 201, GET answers 200
+PASS  C2  linkbox:v1 reads what linkbox:v2 wrote with the flag on: redirect 302, list 200
+PASS  C3  linkbox:v2 reads a row from before the migration: 200, expiresAt=null, redirect 302
+PASS  C4  the migration has a way back: down ran, linkbox:v1 then answers 201, up ran
+
+== log load-log.txt
+PASS  L0  the run used these tools: log says 4b56096c90ea819d, tools/ is 4b56096c90ea819d
+PASS  L1  one continuous run that ended cleanly: 1 run(s), ended
+PASS  L2  traffic held up: 7293 requests in 184 s, 39.6 a second (needs 20)
+PASS  L3  failed requests outside the bad canary: 0
+PASS  L4  canary before 100%: 10% 16 s, 50% 15 s (needs 2 stages, the first at 25% or less for 10 s)
+PASS  L5  migration before deploy: marked at T+30.5s, then 1.0.0 served 17 s on the new schema before 2.0.0 took a request
+PASS  L6  rollback to 1.0.0 under load: 1.0.0 alone for 15 s (needs 10), then forward to 2.0.0
+PASS  L7  bad canary stayed a canary: 14 requests reached it, 3 failed, its weight peaked at 10% (limit 25%)
+PASS  L8  time to rollback: 3 s from its first failed request to its last answered request (limit 300 s)
+PASS  L9  clean end: 16 s after the rollback, the last 10 s all 2.0.0 with 0 failed
+
+RESULT: 39 of 39 passed
