@@ -75,3 +75,18 @@ handle, so on Node 22.13.1 it is collected and its prepared statements are final
 **Done when:**
 - A full dress rehearsal (router + load + both scripts, v1 → v2 → rollback → v2 → `v3-bad`) gives L0–L9 PASS in `npm run check -- log`, with the gate stopping `v3-bad` by itself.
 - `git diff starter -- tools/ test/app.test.js` is empty and the fingerprint is `4b56096c90ea819d`.
+
+## Brief 4 — RELEASE.md and NOTES.md (criteria 3, 4, 5 and 6)
+
+**Ask:** write `RELEASE.md` for what is in this repository, and a first `NOTES.md`.
+- `RELEASE.md`: one table row per step of the real run, in order, with five columns: the schema after the step, what is serving, the exact command, how to undo it, which versions can run on that schema. It must match the tags (`starter`, `v1`, `v2`), the migration (`002_expiry`) and the commands in `package.json`.
+- It also says: the point of no return (or why there is none); the gate's limit, why that number, and what it misses; and what a rollback does not undo, including what happens to a link that expired while v1 was serving.
+- `NOTES.md`: anything wrong or surprising in a tool (`tools/`, README), as findings, without changing the tool; and what the machine could not do (the second part is filled in after the real run).
+
+**Limits:**
+- Nothing under `tools/` and nothing in `test/app.test.js` may change; no code changes in this brief.
+- Every number in `RELEASE.md` must be one that is in `deploy/release.js` or in a log; no figure taken from memory.
+
+**Done when:**
+- Each of the commands in the table exists in the repository (`package.json`, `compose.yaml`, `docs/CHANGE.md`), checked by reading them.
+- The gate numbers in `RELEASE.md` equal the constants at the top of `deploy/release.js`.
