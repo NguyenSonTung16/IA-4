@@ -59,3 +59,19 @@ handle, so on Node 22.13.1 it is collected and its prepared statements are final
 - `npm test` passes, including the new tests.
 - After `docker build --build-arg APP_VERSION=2.0.0 -t linkbox:v2 .`: `npm run check -- change` shows F1–F7 PASS, `npm run check -- compat` shows C1–C4 PASS.
 - `git diff starter -- tools/ test/app.test.js` is empty and the fingerprint is `4b56096c90ea819d`.
+
+## Brief 3 — release and rollback scripts (criteria 4 and 5)
+
+**Ask:** write `deploy/release.js` (`npm run release -- <tag>`) and `deploy/rollback.js` (`npm run rollback`), plain Node, no dependencies, using only the router's control port and the `docker` CLI.
+- `release`: put `linkbox:<tag>` in the idle slot, wait until Docker reports the container healthy (not a timer), then move traffic in stages: at least two stages below 100%, the first at 25% or less for at least 10 s. While waiting it reads `GET :8081/state` and, when the canary slot fails more than a limit, sends all traffic back by itself and exits non-zero. It leaves the old slot running. `/health` stays green in the bad release, so the gate must count the router's errors, not ask `/health`.
+- `rollback`: one command, sends everything to the other slot and confirms the new weights from `GET :8081/state`.
+- Both leave marks in the load log (`POST :8081/mark`). No mark may contain the word "migrat": the checks read that word as the migration.
+
+**Limits:**
+- Nothing under `tools/` and nothing in `test/app.test.js` may change; `compose.yaml`, the Dockerfile and `src/` stay as they are.
+- Touch only `deploy/release.js`, `deploy/rollback.js` and a shared `deploy/lib.js`. Leave `deploy/migrate.js` alone.
+- Write the limit and the stage times as named constants at the top, so `RELEASE.md` can say why.
+
+**Done when:**
+- A full dress rehearsal (router + load + both scripts, v1 → v2 → rollback → v2 → `v3-bad`) gives L0–L9 PASS in `npm run check -- log`, with the gate stopping `v3-bad` by itself.
+- `git diff starter -- tools/ test/app.test.js` is empty and the fingerprint is `4b56096c90ea819d`.
