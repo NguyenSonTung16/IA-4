@@ -65,3 +65,19 @@ Assistant: Claude (Sonnet 5.5), used through the Claude desktop app. Entries are
     `docker()` no longer gives the child a stdin pipe.
 - (Not the product: the rehearsal stand-in also had two bugs of mine, a wrong argument position and a
   backgrounded `cd … &&` list that held the pipe open. Found by the same rehearsal, fixed there.)
+
+## Brief 4 — RELEASE.md and NOTES.md (commits "docs: RELEASE.md…", "docs: NOTES.md…")
+
+**Changed** (what I kept from the assistant)
+- `RELEASE.md`: a ten-row table (schema, what serves, exact command, undo, versions) that follows the real run, the
+  point of no return (none for traffic; only `migrate down` loses data), the gate (limit, why, what it misses), and what a
+  rollback does not undo, including a link that expired while v1 served (302 under v1, 410 under v2).
+- `NOTES.md`: six findings about the starter and the tools, no tool changed.
+
+**Rejected** (what the assistant got wrong, and what caught it)
+- The first `RELEASE.md` said the canary gets "around 60 requests in 15 s" and that the gate misses faults below "about 5%".
+  The rehearsal log shows 35 requests in 10 s at 10%, so about 50 in 15 s and a floor near 6%. Caught by comparing the text with
+  the log lines before committing; corrected to 50 and 6% in the same commit.
+- The first `NOTES.md` said the starter's own test failed "in some runs" and that the release waits "about 3 s" for health.
+  I had run that test once on each Node version, and the 3 s was the rehearsal stand-in, not Docker. Caught by re-reading the
+  notes against what I had actually run; both claims were cut back (commit "docs: say only what was measured").
