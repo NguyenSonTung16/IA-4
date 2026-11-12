@@ -39,3 +39,23 @@ handle, so on Node 22.13.1 it is collected and its prepared statements are final
 **Done when:**
 - With Node 22.13.1 and a forced garbage collection, `/health` still answers 200 (it answers 500 before the fix).
 - `npm test` still passes, and after rebuilding `linkbox:v1`, `npm run check -- image --new=linkbox:v1` shows I1–I15 all PASS.
+
+## Brief 2 — the change: links can expire, behind a flag (criteria 2 and 3)
+
+**Ask:** build exactly what `docs/CHANGE.md` specifies, as v2, starting from tag `v1`.
+- Migration `migrations/002_expiry.up.sql` + `002_expiry.down.sql`: a nullable `links.expires_at`, and a table that stores the flag in the database.
+- v1 must keep running on the migrated schema, and the down migration must give v1 a working schema again.
+- Flag `expiry`: stored in the database, off by default, never an environment variable; every running instance sees a flip within 2 s with no restart; `PUT /admin/flags/expiry` with `x-admin-token` (200 with the new state, 401 on a wrong or missing token); `GET /version` gains `flags`.
+- Flag off: behaves as v1 (`expiresInSeconds` ignored, `expiresAt` is `null`, `GET /r/:code` always redirects).
+- Flag on: the table in `docs/CHANGE.md` (201 with ISO `expiresAt`, 400 for a bad `expiresInSeconds`, 410 `{"error":"expired"}` for an expired link without counting the hit).
+- Every field v1 returns stays; rows from before the migration have `expiresAt: null` and never expire.
+
+**Limits:**
+- Nothing under `tools/` and nothing in `test/app.test.js` may change.
+- Keep `createApp(db, config)` and `node src/migrate.js` as they are. No new dependencies.
+- Touch only `src/app.js`, `migrations/002_*`, and new test files (`test/expiry.test.js`). Do not touch the `/__probe/slow` route.
+
+**Done when:**
+- `npm test` passes, including the new tests.
+- After `docker build --build-arg APP_VERSION=2.0.0 -t linkbox:v2 .`: `npm run check -- change` shows F1–F7 PASS, `npm run check -- compat` shows C1–C4 PASS.
+- `git diff starter -- tools/ test/app.test.js` is empty and the fingerprint is `4b56096c90ea819d`.
