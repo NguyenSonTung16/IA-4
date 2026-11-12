@@ -1,6 +1,7 @@
 # AI-LOG.md
 
-Assistant: Claude (Sonnet 5.5), used through the Claude desktop app. Entries are written when they happen.
+Assistants: Claude (Sonnet 5.5), used through the Claude desktop app for the briefs below, and Codex,
+used for the Docker run and submission review described at the end.
 
 ## Brief 1 — package v1 (commits `ba7e7fd`, then fix `b8340ef`)
 
@@ -81,3 +82,19 @@ Assistant: Claude (Sonnet 5.5), used through the Claude desktop app. Entries are
 - The first `NOTES.md` said the starter's own test failed "in some runs" and that the release waits "about 3 s" for health.
   I had run that test once on each Node version, and the 3 s was the rehearsal stand-in, not Docker. Caught by re-reading the
   notes against what I had actually run; both claims were cut back (commit "docs: say only what was measured").
+
+## Codex — real Docker run and submission review (12 Nov 2026)
+
+**Request:** Run the prepared PowerShell sequence on Docker: check the existing v1 and v2 images, start the
+router and v1, keep one load run going through the v2 migration, release, flag change, rollback, second release
+and intentionally bad canary, then stop the load and run the full check. Save the three UTF-8 evidence files.
+
+**What Codex did:** Ran the sequence and saved `load-log.txt`, `release-log.txt` and `check-log.txt`. The bad
+canary was stopped by the gate after 3 errors in 14 requests; the full check reported 39 of 39 passed. The
+three failures were from the intentionally bad version, with no failures outside that canary (L3). The user
+then asked Codex to review the submission ZIP: Codex extracted it, inspected its files and Git history, and
+reran `npm test` (14 of 14) and `npm run check -- log` (10 of 10). Codex could not access the IA#4 rubric
+PDF and therefore did not confirm every rubric criterion or the claimed score.
+
+**Changed / rejected:** Codex did not change the application or deployment scripts for the run or review.
+This entry was added at the user's request after the review identified that Codex's participation was missing.
